@@ -3,12 +3,15 @@ package entrypoint
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/sunr3d/warehouse-control/internal/config"
 	httphandlers "github.com/sunr3d/warehouse-control/internal/handlers"
 	"github.com/sunr3d/warehouse-control/internal/infra/postgres"
 	"github.com/sunr3d/warehouse-control/internal/interfaces/infra"
 	"github.com/sunr3d/warehouse-control/internal/server"
+	"github.com/sunr3d/warehouse-control/internal/services/authsvc"
+	"github.com/sunr3d/warehouse-control/internal/services/inventorysvc"
 )
 
 func RunApp(ctx context.Context, cfg *config.Config) error {
@@ -24,10 +27,11 @@ func RunApp(ctx context.Context, cfg *config.Config) error {
 	}(repo)
 
 	// Сервисный слой (Application / Use Cases layer)
-	// TODO: Init svc
+	authSvc := authsvc.New(repo, cfg.JWTSecret)
+	invSvc := inventorysvc.New(repo)
 
 	// Слой представления (Presentation layer)
-	h := httphandlers.New(svc)
+	h := httphandlers.New(authSvc, invSvc)
 	engine := h.RegisterHandlers()
 
 	// Сервер

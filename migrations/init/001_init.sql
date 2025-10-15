@@ -18,8 +18,8 @@ CREATE TABLE IF NOT EXISTS items (
 
 CREATE TABLE IF NOT EXISTS items_history (
     id SERIAL PRIMARY KEY,
-    item_id INTEGER NOT NULL REFERENCES items(id),
-    user_id INTEGER NOT NULL REFERENCES users(id),
+    item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     operation VARCHAR(20) NOT NULL CHECK (operation IN ('INSERT', 'UPDATE', 'DELETE')),
     old_value TEXT,
     new_value TEXT,
@@ -40,21 +40,18 @@ BEGIN
     current_user_id := COALESCE(current_setting('warehouse.user_id', TRUE)::INTEGER, 0);
 
     IF (TG_OP = 'INSERT') THEN
-        INSERT INTO items_history (item_id, user_id, operation, old_value, new_value)
-        VALUES (NEW.id, current_user_id, 'INSERT', NULL, row_to_json(NEW)::TEXT);
+        INSERT INTO items_history (item_id, user_id, operation, old_value, new_value, changed_at)
+        VALUES (NEW.id, current_user_id, 'INSERT', NULL, row_to_json(NEW)::TEXT, CURRENT_TIMESTAMP);
     ELSIF (TG_OP = 'UPDATE') THEN
-        INSERT INTO items_history (item_id, user_id, operation, old_value, new_value)
-        VALUES (NEW.id, current_user_id, 'UPDATE', row_to_json(OLD)::TEXT, row_to_json(NEW)::TEXT);
-    ELSIF (TG_OP = 'DELETE') THEN
-        INSERT INTO items_history (item_id, user_id, operation, old_value, new_value)
-        VALUES (OLD.id, current_user_id, 'DELETE', row_to_json(OLD)::TEXT, NULL);
+        INSERT INTO items_history (item_id, user_id, operation, old_value, new_value, changed_at)
+        VALUES (NEW.id, current_user_id, 'UPDATE', row_to_json(OLD)::TEXT, row_to_json(NEW)::TEXT, CURRENT_TIMESTAMP);
     END IF;
     RETURN COALESCE(NEW, OLD);
 END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER item_history_trigger
-AFTER INSERT OR UPDATE OR DELETE ON items
+AFTER INSERT OR UPDATE ON items
 FOR EACH ROW EXECUTE FUNCTION log_item_changes();
 
 -- Пользователи

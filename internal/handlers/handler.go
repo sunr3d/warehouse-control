@@ -46,10 +46,12 @@ func (h *handler) RegisterHandlers() *ginext.Engine {
 
 	protected.POST("", middleware.RBACMiddleware(
 		models.RoleAdmin,
+		models.RoleManager,
 	), h.createItem)
 
 	protected.PUT("/:id", middleware.RBACMiddleware(
 		models.RoleAdmin,
+		models.RoleManager,
 	), h.updateItem)
 
 	protected.DELETE("/:id", middleware.RBACMiddleware(

@@ -83,6 +83,7 @@ func (h *handler) updateItem(c *ginext.Context) {
 		Name:        req.Name,
 		Description: req.Description,
 		Quantity:    req.Quantity,
+		UpdatedAt:   time.Now(),
 	}
 
 	err = h.invSvc.UpdateItem(c.Request.Context(), userID, id, item)

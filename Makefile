@@ -22,3 +22,11 @@ mocks:
 
 fmt:
 	go fmt ./...
+
+migrate-up:
+	docker exec -i warehouse-control-postgres psql -U warehouse_control_user -d warehouse_control_db < migrations/init/001_init.sql
+
+migrate-down:
+	docker exec -i warehouse-control-postgres psql -U warehouse_control_user -d warehouse_control_db < migrations/manual/002_cleanup.sql
+
+migrate-reset: migrate-down migrate-up

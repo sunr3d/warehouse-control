@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunr3d's Warehouse Control</title>
+</head>
+<body>
+    <h1>Склад - Управление товарами</h1>
+    
+    <!-- Форма логина -->
+    <div id="loginForm">
+        <h2>Вход в систему</h2>
+        <select id="userSelect">
+            <option value="">Выберите пользователя</option>
+            <option value="admin123">Администратор (admin123)</option>
+            <option value="manager123">Менеджер (manager123)</option>
+            <option value="viewer123">Просмотр (viewer123)</option>
+        </select>
+        <input type="password" id="password" placeholder="Пароль: password" value="password">
+        <button onclick="login()">Войти</button>
+        <div id="loginError" style="color: red;"></div>
+    </div>
+
+    <!-- Основной интерфейс -->
+    <div id="mainInterface" style="display: none;">
+        <div>
+            <span>Пользователь: <span id="currentUser"></span></span>
+            <button onclick="logout()">Выйти</button>
+        </div>
+
+        <!-- Форма добавления товара -->
+        <div id="addItemForm" style="display: none;">
+            <h3>Добавить товар</h3>
+            <input type="text" id="itemName" placeholder="Название товара">
+            <input type="text" id="itemDescription" placeholder="Описание">
+            <input type="number" id="itemQuantity" placeholder="Количество" min="1">
+            <button onclick="addItem()">Добавить</button>
+        </div>
+
+        <!-- Список товаров -->
+        <h3>Список товаров</h3>
+        <div id="itemsList"></div>
+
+        <!-- История изменений -->
+        <div id="historyModal" style="display: none; position: fixed; top: 50px; left: 50px; background: white; border: 1px solid black; padding: 20px;">
+            <h3>История изменений товара <span id="historyItemName"></span></h3>
+            <div id="historyContent"></div>
+            <button onclick="closeHistory()">Закрыть</button>
+        </div>
+    </div>
+
+    <script src="web/script.js"></script>
+</body>
+</html>

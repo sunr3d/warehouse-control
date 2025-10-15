@@ -20,10 +20,11 @@ const (
 
 	qListItems = `
 	SELECT id, item_name, item_description, quantity, created_at, updated_at
-	FROM items`
+	FROM items
+	ORDER BY id`
 
 	qUpdateItem = `
-	UPDATE items SET item_name = $2, item_description = $3, quantity = $4 
+	UPDATE items SET item_name = $2, item_description = $3, quantity = $4, updated_at = $5
 	WHERE id = $1`
 
 	qDeleteItem = `
@@ -31,7 +32,7 @@ const (
 	WHERE id = $1`
 
 	qSetUserID = `
-	SET LOCAL warehouse.user_id = $1`
+	SET warehouse.user_id = %d`
 )
 
 var _ infra.ItemRepo = (*itemRepo)(nil)
@@ -51,8 +52,7 @@ func (r *itemRepo) Create(ctx context.Context, userID int, item *models.Item) (i
 
 	_, err = tx.ExecContext(
 		ctx,
-		qSetUserID,
-		userID,
+		fmt.Sprintf(qSetUserID, userID),
 	)
 	if err != nil {
 		zlog.Logger.Error().Err(err).Msgf("Create: не удалось установить userID: %d", userID)
@@ -149,8 +149,7 @@ func (r *itemRepo) Update(ctx context.Context, userID, id int, item *models.Item
 
 	_, err = tx.ExecContext(
 		ctx,
-		qSetUserID,
-		userID,
+		fmt.Sprintf(qSetUserID, userID),
 	)
 	if err != nil {
 		zlog.Logger.Error().
@@ -167,6 +166,7 @@ func (r *itemRepo) Update(ctx context.Context, userID, id int, item *models.Item
 		item.Name,
 		item.Description,
 		item.Quantity,
+		item.UpdatedAt,
 	)
 	if err != nil {
 		zlog.Logger.Error().
@@ -211,8 +211,7 @@ func (r *itemRepo) Delete(ctx context.Context, userID, id int) error {
 
 	_, err = tx.ExecContext(
 		ctx,
-		qSetUserID,
-		userID,
+		fmt.Sprintf(qSetUserID, userID),
 	)
 	if err != nil {
 		zlog.Logger.Error().Err(err).Msgf("Delete: не удалось установить userID: %d", userID)

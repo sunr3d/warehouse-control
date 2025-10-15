@@ -10,13 +10,3 @@ type Item struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
-
-type ItemHistory struct {
-	ID        int
-	ItemID    int
-	UserID    int
-	Action    string
-	OldValue  *string
-	NewValue  *string
-	ChangedAt time.Time
-}

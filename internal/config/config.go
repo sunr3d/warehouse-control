@@ -1,8 +1,9 @@
 package config
 
 type Config struct {
-	HTTPPort string `mapstructure:"HTTP_PORT"`
-	LogLevel string `mapstructure:"LOG_LEVEL"`
+	HTTPPort  string `mapstructure:"HTTP_PORT"`
+	LogLevel  string `mapstructure:"LOG_LEVEL"`
+	JWTSecret string `mapstructure:"JWT_SECRET"`
 
 	DB DBConfig `mapstructure:",squash"`
 }

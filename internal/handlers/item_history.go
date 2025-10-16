@@ -8,14 +8,21 @@ import (
 
 	"github.com/wb-go/wbf/ginext"
 	"github.com/wb-go/wbf/zlog"
+
+	"github.com/sunr3d/warehouse-control/models"
 )
 
 // getItemHistory - ручка для получения истории изменений конкретного itemID.
 func (h *handler) getItemHistory(c *ginext.Context) {
+	userClaims, _ := c.Get("user")
+	claims := userClaims.(*models.JWTClaims)
+	userID := claims.UserID
+
 	id, err := parseID(c.Param("id"))
 	if err != nil {
-		zlog.Logger.Error().
+		zlog.Logger.Warn().
 			Err(err).
+			Int("user_id", userID).
 			Int("id", id).
 			Msg("getItemHistory: некорректный запрос")
 		c.JSON(
@@ -25,11 +32,17 @@ func (h *handler) getItemHistory(c *ginext.Context) {
 		return
 	}
 
+	zlog.Logger.Info().
+		Int("user_id", userID).
+		Int("item_id", id).
+		Msg("getItemHistory: попытка получить историю изменений")
+
 	history, err := h.invSvc.GetItemHistory(c.Request.Context(), id)
 	if err != nil {
 		if strings.Contains(err.Error(), "не найден") {
-			zlog.Logger.Error().
+			zlog.Logger.Warn().
 				Err(err).
+				Int("user_id", userID).
 				Int("id", id).
 				Msg("getItemHistory: история изменений не найдена")
 			c.JSON(http.StatusNotFound, ginext.H{"error": "история изменений для item с id " + strconv.Itoa(id) + " не найдена"})
@@ -37,6 +50,7 @@ func (h *handler) getItemHistory(c *ginext.Context) {
 		}
 		zlog.Logger.Error().
 			Err(err).
+			Int("user_id", userID).
 			Int("id", id).
 			Msg("getItemHistory: не удалось получить историю изменений")
 		c.JSON(http.StatusInternalServerError, ginext.H{"error": "не удалось получить историю изменений"})
@@ -60,6 +74,11 @@ func (h *handler) getItemHistory(c *ginext.Context) {
 
 		resp.Items = append(resp.Items, itemHist)
 	}
+
+	zlog.Logger.Info().
+		Int("user_id", userID).
+		Int("item_id", id).
+		Msg("getItemHistory: история изменений успешно получена")
 
 	c.JSON(http.StatusOK, resp)
 }

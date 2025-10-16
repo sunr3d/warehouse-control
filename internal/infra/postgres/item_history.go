@@ -38,9 +38,12 @@ func (r *itemHistoryRepo) GetByItemID(ctx context.Context, itemID int) ([]models
 		itemID,
 	)
 	if err != nil {
-		zlog.Logger.Error().Err(err).Msgf("GetByItemID: не удалось выполнить запрос GetByItemID для itemID: %d", itemID)
+		zlog.Logger.Error().
+			Err(err).
+			Int("item_id", itemID).
+			Msg("GetByItemID: не удалось выполнить запрос GetByItemID")
 
-		return nil, fmt.Errorf("не удалось выполнить запрос GetByItemID для itemID: %d: %w", itemID, err)
+		return nil, fmt.Errorf("не удалось выполнить запрос GetByItemID: %w", err)
 	}
 	defer rows.Close()
 
@@ -56,18 +59,24 @@ func (r *itemHistoryRepo) GetByItemID(ctx context.Context, itemID int) ([]models
 			&itemHistory.NewValue,
 			&itemHistory.ChangedAt,
 		); err != nil {
-			zlog.Logger.Error().Err(err).Msgf("GetByItemID: не удалось перевести данные из строки в структуру для itemID: %d", itemID)
+			zlog.Logger.Error().
+				Err(err).
+				Int("item_id", itemID).
+				Msg("GetByItemID: не удалось перевести данные из строки в структуру")
 
-			return nil, fmt.Errorf("не удалось перевести данные из строки в структуру для itemID: %d: %w", itemID, err)
+			return nil, fmt.Errorf("не удалось перевести данные из строки в структуру: %w", err)
 		}
 
 		ledger = append(ledger, itemHistory)
 	}
 
 	if err := rows.Err(); err != nil {
-		zlog.Logger.Error().Err(err).Msgf("GetByItemID: не удалось получить все строки для itemID: %d", itemID)
+		zlog.Logger.Error().
+			Err(err).
+			Int("item_id", itemID).
+			Msg("GetByItemID: не удалось получить все строки")
 
-		return nil, fmt.Errorf("не удалось получить все строки для itemID: %d: %w", itemID, err)
+		return nil, fmt.Errorf("не удалось получить все строки: %w", err)
 	}
 
 	return ledger, nil

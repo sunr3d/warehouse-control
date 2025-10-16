@@ -45,8 +45,12 @@ type itemRepo struct {
 func (r *itemRepo) Create(ctx context.Context, userID int, item *models.Item) (int, error) {
 	tx, err := r.db.Master.BeginTx(ctx, nil)
 	if err != nil {
-		zlog.Logger.Error().Err(err).Msgf("Create: не удалось начать транзакцию для item: %v", item)
-		return 0, fmt.Errorf("не удалось начать транзакцию для item: %v: %w", item, err)
+		zlog.Logger.Error().
+			Err(err).
+			Int("user_id", userID).
+			Msg("Create: не удалось начать транзакцию")
+
+		return 0, fmt.Errorf("не удалось начать транзакцию: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -55,9 +59,12 @@ func (r *itemRepo) Create(ctx context.Context, userID int, item *models.Item) (i
 		fmt.Sprintf(qSetUserID, userID),
 	)
 	if err != nil {
-		zlog.Logger.Error().Err(err).Msgf("Create: не удалось установить userID: %d", userID)
+		zlog.Logger.Error().
+			Err(err).
+			Int("user_id", userID).
+			Msg("Create: не удалось установить userID")
 
-		return 0, fmt.Errorf("не удалось установить userID: %d: %w", userID, err)
+		return 0, fmt.Errorf("не удалось установить userID: %w", err)
 	}
 
 	row := tx.QueryRowContext(
@@ -69,15 +76,25 @@ func (r *itemRepo) Create(ctx context.Context, userID int, item *models.Item) (i
 	)
 	var id int
 	if err := row.Scan(&id); err != nil {
-		zlog.Logger.Error().Err(err).Msgf("Create: не удалось перевести данные из строки в структуру для item: %v", item)
+		zlog.Logger.Error().
+			Err(err).
+			Int("user_id", userID).
+			Str("item_name", item.Name).
+			Int("quantity", item.Quantity).
+			Msg("Create: не удалось перевести данные из строки в структуру")
 
-		return 0, fmt.Errorf("не удалось перевести данные из строки в структуру для item: %v: %w", item, err)
+		return 0, fmt.Errorf("не удалось перевести данные из строки в структуру: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		zlog.Logger.Error().Err(err).Msgf("Create: не удалось завершить транзакцию для item: %v", item)
+		zlog.Logger.Error().
+			Err(err).
+			Int("user_id", userID).
+			Str("item_name", item.Name).
+			Int("quantity", item.Quantity).
+			Msg("Create: не удалось завершить транзакцию")
 
-		return 0, fmt.Errorf("не удалось завершить транзакцию для item: %v: %w", item, err)
+		return 0, fmt.Errorf("не удалось завершить транзакцию: %w", err)
 	}
 
 	return id, nil
@@ -97,7 +114,7 @@ func (r *itemRepo) List(ctx context.Context) ([]models.Item, error) {
 	if err != nil {
 		zlog.Logger.Error().
 			Err(err).
-			Msgf("List: не удалось выполнить запрос List")
+			Msg("List: не удалось выполнить запрос List")
 
 		return nil, fmt.Errorf("не удалось выполнить запрос List: %w", err)
 	}
@@ -116,9 +133,9 @@ func (r *itemRepo) List(ctx context.Context) ([]models.Item, error) {
 		); err != nil {
 			zlog.Logger.Error().
 				Err(err).
-				Msgf("List: не удалось перевести данные из строки в структуру для item")
+				Msg("List: не удалось перевести данные из строки в структуру")
 
-			return nil, fmt.Errorf("не удалось перевести данные из строки в структуру для item: %w", err)
+			return nil, fmt.Errorf("не удалось перевести данные из строки в структуру: %w", err)
 		}
 
 		items = append(items, item)
@@ -127,7 +144,7 @@ func (r *itemRepo) List(ctx context.Context) ([]models.Item, error) {
 	if err := rows.Err(); err != nil {
 		zlog.Logger.Error().
 			Err(err).
-			Msgf("List: не удалось получить все строки")
+			Msg("List: не удалось получить все строки")
 
 		return nil, fmt.Errorf("не удалось получить все строки: %w", err)
 	}
@@ -141,9 +158,13 @@ func (r *itemRepo) Update(ctx context.Context, userID, id int, item *models.Item
 	if err != nil {
 		zlog.Logger.Error().
 			Err(err).
-			Msgf("Update: не удалось начать транзакцию для item: %v", item)
+			Int("user_id", userID).
+			Int("item_id", id).
+			Str("item_name", item.Name).
+			Int("quantity", item.Quantity).
+			Msg("Update: не удалось начать транзакцию")
 
-		return fmt.Errorf("не удалось начать транзакцию для item: %v: %w", item, err)
+		return fmt.Errorf("не удалось начать транзакцию: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -154,9 +175,10 @@ func (r *itemRepo) Update(ctx context.Context, userID, id int, item *models.Item
 	if err != nil {
 		zlog.Logger.Error().
 			Err(err).
-			Msgf("Update: не удалось установить userID: %d", userID)
+			Int("user_id", userID).
+			Msg("Update: не удалось установить userID")
 
-		return fmt.Errorf("не удалось установить userID: %d: %w", userID, err)
+		return fmt.Errorf("не удалось установить userID: %w", err)
 	}
 
 	result, err := tx.ExecContext(
@@ -171,18 +193,26 @@ func (r *itemRepo) Update(ctx context.Context, userID, id int, item *models.Item
 	if err != nil {
 		zlog.Logger.Error().
 			Err(err).
-			Msgf("Update: не удалось выполнить запрос Update для item: %v", item)
+			Int("user_id", userID).
+			Int("item_id", id).
+			Str("item_name", item.Name).
+			Int("quantity", item.Quantity).
+			Msg("Update: не удалось выполнить запрос Update")
 
-		return fmt.Errorf("не удалось выполнить запрос Update для item: %v: %w", item, err)
+		return fmt.Errorf("не удалось выполнить запрос Update: %w", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		zlog.Logger.Error().
 			Err(err).
-			Msgf("Update: не удалось получить количество строк, обновленных запросом Update для item: %v", item)
+			Int("user_id", userID).
+			Int("item_id", id).
+			Str("item_name", item.Name).
+			Int("quantity", item.Quantity).
+			Msg("Update: не удалось получить количество строк, обновленных запросом Update")
 
-		return fmt.Errorf("не удалось получить количество строк, обновленных запросом Update для item: %v: %w", item, err)
+		return fmt.Errorf("не удалось получить количество строк, обновленных запросом Update: %w", err)
 	}
 	if rowsAffected == 0 {
 		return fmt.Errorf("item с id %d не найден", id)
@@ -191,9 +221,13 @@ func (r *itemRepo) Update(ctx context.Context, userID, id int, item *models.Item
 	if err := tx.Commit(); err != nil {
 		zlog.Logger.Error().
 			Err(err).
-			Msgf("Update: не удалось завершить транзакцию для item: %v", item)
+			Int("user_id", userID).
+			Int("item_id", id).
+			Str("item_name", item.Name).
+			Int("quantity", item.Quantity).
+			Msg("Update: не удалось завершить транзакцию")
 
-		return fmt.Errorf("не удалось завершить транзакцию для item: %v: %w", item, err)
+		return fmt.Errorf("не удалось завершить транзакцию: %w", err)
 	}
 
 	return nil
@@ -203,9 +237,13 @@ func (r *itemRepo) Update(ctx context.Context, userID, id int, item *models.Item
 func (r *itemRepo) Delete(ctx context.Context, userID, id int) error {
 	tx, err := r.db.Master.BeginTx(ctx, nil)
 	if err != nil {
-		zlog.Logger.Error().Err(err).Msgf("Delete: не удалось начать транзакцию для item: %v", id)
+		zlog.Logger.Error().
+			Err(err).
+			Int("user_id", userID).
+			Int("item_id", id).
+			Msg("Delete: не удалось начать транзакцию")
 
-		return fmt.Errorf("не удалось начать транзакцию для item: %v: %w", id, err)
+		return fmt.Errorf("не удалось начать транзакцию: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -214,9 +252,12 @@ func (r *itemRepo) Delete(ctx context.Context, userID, id int) error {
 		fmt.Sprintf(qSetUserID, userID),
 	)
 	if err != nil {
-		zlog.Logger.Error().Err(err).Msgf("Delete: не удалось установить userID: %d", userID)
+		zlog.Logger.Error().
+			Err(err).
+			Int("user_id", userID).
+			Msg("Delete: не удалось установить userID")
 
-		return fmt.Errorf("не удалось установить userID: %d: %w", userID, err)
+		return fmt.Errorf("не удалось установить userID: %w", err)
 	}
 
 	result, err := tx.ExecContext(
@@ -227,27 +268,35 @@ func (r *itemRepo) Delete(ctx context.Context, userID, id int) error {
 	if err != nil {
 		zlog.Logger.Error().
 			Err(err).
-			Msgf("Delete: не удалось выполнить запрос Delete для item: %v", id)
+			Int("user_id", userID).
+			Int("item_id", id).
+			Msg("Delete: не удалось выполнить запрос Delete")
 
-		return fmt.Errorf("не удалось выполнить запрос Delete для item: %v: %w", id, err)
+		return fmt.Errorf("не удалось выполнить запрос Delete: %w", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		zlog.Logger.Error().
 			Err(err).
-			Msgf("Delete: не удалось получить количество строк, удаленных запросом Delete для item: %v", id)
+			Int("user_id", userID).
+			Int("item_id", id).
+			Msg("Delete: не удалось получить количество строк, удаленных запросом Delete")
 
-		return fmt.Errorf("не удалось получить количество строк, удаленных запросом Delete для item: %d: %w", id, err)
+		return fmt.Errorf("не удалось получить количество строк, удаленных запросом Delete: %w", err)
 	}
 	if rowsAffected == 0 {
 		return fmt.Errorf("item с id %d не найден", id)
 	}
 
 	if err := tx.Commit(); err != nil {
-		zlog.Logger.Error().Err(err).Msgf("Delete: не удалось завершить транзакцию для item: %v", id)
+		zlog.Logger.Error().
+			Err(err).
+			Int("user_id", userID).
+			Int("item_id", id).
+			Msg("Delete: не удалось завершить транзакцию")
 
-		return fmt.Errorf("не удалось завершить транзакцию для item: %v: %w", id, err)
+		return fmt.Errorf("не удалось завершить транзакцию: %w", err)
 	}
 
 	return nil

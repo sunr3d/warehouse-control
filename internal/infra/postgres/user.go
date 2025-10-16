@@ -43,9 +43,11 @@ func (r *userRepo) GetByUsername(ctx context.Context, username string) (*models.
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("пользователь %s не найден", username)
 		}
-		zlog.Logger.Error().Err(err).Msgf("GetByUsername: пользователь %s не найден", username)
+		zlog.Logger.Error().Err(err).
+			Str("username", username).
+			Msg("GetByUsername: пользователь не найден")
 
-		return nil, fmt.Errorf("не удалось выполнить запрос GetByUsername для пользователя %s: %w", username, err)
+		return nil, fmt.Errorf("не удалось выполнить запрос GetByUsername: %w", err)
 	}
 
 	if err := row.Scan(
@@ -54,9 +56,11 @@ func (r *userRepo) GetByUsername(ctx context.Context, username string) (*models.
 		&user.PasswordHash,
 		&user.Role,
 	); err != nil {
-		zlog.Logger.Error().Err(err).Msgf("GetByUsername: не удалось перевести данные из строки в структуру для пользователя %s", username)
+		zlog.Logger.Error().Err(err).
+			Str("username", username).
+			Msg("GetByUsername: не удалось перевести данные из строки в структуру")
 
-		return nil, fmt.Errorf("не удалось перевести данные из строки в структуру для пользователя %s: %w", username, err)
+		return nil, fmt.Errorf("не удалось перевести данные из строки в структуру: %w", err)
 	}
 
 	return &user, nil

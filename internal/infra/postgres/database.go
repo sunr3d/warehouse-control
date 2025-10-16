@@ -34,7 +34,9 @@ func New(ctx context.Context, cfg config.DBConfig) (infra.Database, error) {
 
 	db, err := dbpg.New(cfg.DSN, nil, options)
 	if err != nil {
-		zlog.Logger.Error().Err(err).Msg("не удалось создать БД")
+		zlog.Logger.Error().
+			Err(err).
+			Msg("New: не удалось создать БД")
 		return nil, fmt.Errorf("не удалось создать БД: %w", err)
 	}
 
@@ -42,12 +44,19 @@ func New(ctx context.Context, cfg config.DBConfig) (infra.Database, error) {
 	defer cancel()
 
 	if err := db.Master.PingContext(pCtx); err != nil {
-		zlog.Logger.Error().Err(err).Msg("ошибка при подключении к БД")
+		zlog.Logger.Error().
+			Err(err).
+			Msg("New: не удалось пингануть БД")
 		if err := db.Master.Close(); err != nil {
-			zlog.Logger.Error().Err(err).Msg("ошибка при закрытии соединения с БД")
+			zlog.Logger.Error().
+				Err(err).
+				Msg("New: не удалось закрыть соединение с БД")
 		}
-		return nil, fmt.Errorf("не удалось подключиться к БД: %w", err)
+		return nil, fmt.Errorf("не удалось пингануть БД: %w", err)
 	}
+
+	zlog.Logger.Info().
+		Msg("New: успешное подключение к БД")
 
 	userRepo := &userRepo{db: db}
 	itemRepo := &itemRepo{db: db}
@@ -64,9 +73,14 @@ func New(ctx context.Context, cfg config.DBConfig) (infra.Database, error) {
 // Использовать через тайпкаст к io.Closer через defer после создания нового postgresRepo.
 func (r *postgresRepo) Close() error {
 	if err := r.userRepo.db.Master.Close(); err != nil {
-		zlog.Logger.Error().Err(err).Msg("не удалось закрыть соединение с БД")
+		zlog.Logger.Error().
+			Err(err).
+			Msg("Close: не удалось закрыть соединение с БД")
 		return err
 	}
+
+	zlog.Logger.Info().
+		Msg("Close: успешное закрытие соединения с БД")
 
 	return nil
 }
